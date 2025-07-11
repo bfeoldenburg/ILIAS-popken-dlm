@@ -1173,7 +1173,7 @@ class ilLPTableBaseGUI extends ilTable2GUI
                         $privacy_fields[] = $f;
                     }
                 }
-
+            } //mk
                 // additional defined user data fields
                 $user_defined_fields = ilUserDefinedFields::_getInstance();
                 if ($a_in_course) {
@@ -1194,7 +1194,7 @@ class ilLPTableBaseGUI extends ilTable2GUI
                         $privacy_fields[] = $f;
                     }
                 }
-            }
+      // mk }
         }
         return array($cols, $privacy_fields);
     }

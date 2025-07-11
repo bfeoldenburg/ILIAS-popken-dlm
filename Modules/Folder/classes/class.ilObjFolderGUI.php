@@ -107,7 +107,7 @@ class ilObjFolderGUI extends ilContainerGUI
         if(!$this->getCreationMode() && $access->checkAccess('read', '', intval($_GET['ref_id'])))
         {
             $link = $ilCtrl->getLinkTargetByClass("ilrepositorygui", "frameset");
-            $nav_history->addItem(intval($_GET['ref_id']), $link, 'fold');
+            // $nav_history->addItem(intval($_GET['ref_id']), $link, 'fold');
         }
 
         $next_class = $this->ctrl->getNextClass($this);

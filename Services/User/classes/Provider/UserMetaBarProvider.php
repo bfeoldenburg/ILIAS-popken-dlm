@@ -46,7 +46,7 @@ class UserMetaBarProvider extends AbstractStaticMetaBarProvider
 
         $children = [];
 //if (!\ilUtil::isRoleMember(["User-demo"])) { 
-if (!\ilUtil::isLimitedRoleMember()) { 
+if ((!\ilUtil::isLimitedRoleMember()) || \ilUtil::isRoleMember(["pusr_std"])) { 
         $children[] = $mb->linkItem($id('personal_profile'))
             ->withAction("ilias.php?baseClass=ilDashboardGUI&cmd=jumpToProfile")
             ->withTitle($txt("personal_profile"))

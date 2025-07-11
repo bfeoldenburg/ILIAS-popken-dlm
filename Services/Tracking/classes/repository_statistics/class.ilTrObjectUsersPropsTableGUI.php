@@ -63,6 +63,7 @@ class ilTrObjectUsersPropsTableGUI extends ilLPTableBaseGUI
         bool $a_print_view = false
     ) {
         global $DIC;
+        $ilDB = $DIC->database();
 
         $this->tree = $DIC->repositoryTree();
         $this->rbacsystem = $DIC->rbac()->system();
@@ -73,6 +74,27 @@ class ilTrObjectUsersPropsTableGUI extends ilLPTableBaseGUI
         $this->obj_id = $a_obj_id;
         $this->ref_id = $a_ref_id;
         $this->type = ilObject::_lookupType($a_obj_id);
+        $this->tlt = "";
+
+        $query = "SELECT * FROM il_meta_educational ".
+        "WHERE obj_id = ".$ilDB->quote($this->obj_id ,'integer');
+        $res = $ilDB->query($query);
+        while($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
+            if (strlen($row->typical_learning_time) == 8) {
+                $this->tlt = str_replace("H", ":", substr($row->typical_learning_time,2,5));
+            } else if (strlen($row->typical_learning_time) == 7) {
+                $this->tlt = "0" . str_replace("H", ":", substr($row->typical_learning_time,2,4));
+            } else if (strlen($row->typical_learning_time) == 5) {
+                $this->tlt = "00:" . substr($row->typical_learning_time,2,2);
+            } else if (strlen($row->typical_learning_time) == 4) {
+                $this->tlt = "00:0" . substr($row->typical_learning_time,2,1);
+            } 
+            // $this->tlt = str_replace("H", ":", substr($row->typical_learning_time,2,5));
+        }
+
+        if ($this->tlt == "") $this->tlt = "00:00";
+            $this->dtc = "not calculated";
+
 
         $this->in_group_ref_id = $this->tree->checkForParentType($this->ref_id, "grp");
         if ($this->in_group_ref_id) {
@@ -457,8 +479,41 @@ class ilTrObjectUsersPropsTableGUI extends ilLPTableBaseGUI
                     );
                     $this->tpl->parseCurrentBlock();
                 }
-
-                $val = $this->parseValue($c, $a_set[$c] ?? '', $this->type);
+                switch($c)
+				{
+					case 'udf_11':
+						if ($this->type == "sahs") {
+							$val = $this->tlt;  // Zeitgutschrift
+						} else {
+							$val = "--";
+						}
+						break;
+					case 'udf_12':
+						if (($this->type == "sahs") && (intval($a_set["status"]) == ilLPStatus::LP_STATUS_COMPLETED_NUM)) {
+							$myDate = new DateTime();
+							//$slc = substr($a_set["status_changed"],0,10);
+						    $slc = $a_set["status_changed"];
+							//$myDate->setdate(intval(substr($slc,0,4)),intval(substr($slc,5,2)),intval(substr($slc,8,2)));
+						    (intval(substr($slc,8,2)) == 1) ? $diff = 0 : $diff = 1;
+						    $myDate->setdate(intval(substr($slc,0,4)),intval(substr($slc,5,2)),intval(substr($slc,8,2))-$diff);
+							$myDate->add( new DateInterval('P1M') );
+							$val = "05" . substr($myDate->format( 'd.m.Y' ),2,8);  // Datum Zeitgutschrift
+							// $val = "05." . substr($a_set["status_changed"],5,2) . "." . substr($a_set["status_changed"],0,4);  // Datum Zeitgutschrift
+						} else {
+							$val = "--";
+						}
+						break;
+					case 'udf_13':
+						if ($this->type == "sahs") {
+							$val = ilObject::_lookupTitle($this->obj_id);  // Modultitel
+						} else {
+							$val = "--";
+						}
+						break;
+					default:              
+                        $val = $this->parseValue($c, $a_set[$c], $this->type);
+                }
+                //$val = $this->parseValue($c, $a_set[$c], $this->type);
             } else {
                 if ($c == 'login') {
                     $this->tpl->setCurrentBlock('inactive_bl');
@@ -542,7 +597,39 @@ class ilTrObjectUsersPropsTableGUI extends ilLPTableBaseGUI
         $cnt = 0;
         foreach ($this->getSelectedColumns() as $c) {
             if ($c != 'status') {
-                $val = $this->parseValue($c, $a_set[$c], $this->type);
+                switch($c)
+                {
+                	case 'udf_11':
+                		if ($this->type == "sahs") {
+                			$val = $this->tlt;  // Zeitgutschrift
+                		} else {
+                			$val = "--";
+                		}
+                		break;
+                	case 'udf_12':
+                		if (($this->type == "sahs") && (intval($a_set["status"]) == ilLPStatus::LP_STATUS_COMPLETED_NUM)) {
+                			$myDate = new DateTime();
+                			//$slc = substr($a_set["status_changed"],0,10);
+                		    $slc = $a_set["status_changed"];
+                		    (intval(substr($slc,8,2)) == 1) ? $diff = 0 : $diff = 1;
+                		    $myDate->setdate(intval(substr($slc,0,4)),intval(substr($slc,5,2)),intval(substr($slc,8,2))-$diff);
+                			$myDate->add( new DateInterval('P1M') );
+                			$val = "05" . substr($myDate->format( 'd.m.Y' ),2,8); // Datum Zeitgutschrift
+                		} else {
+                			$val = "--";
+                		}
+                		break;
+                	case 'udf_13':
+                		if ($this->type == "sahs") {
+                			$val = ilObject::_lookupTitle($this->obj_id);  // Modultitel
+                		} else {
+                    		$val = "--";
+                		}
+                		break;
+                	default:
+                    	$val = $this->parseValue($c, $a_set[$c], $this->type);
+                }
+                //$val = $this->parseValue($c, $a_set[$c], $this->type);
             } else {
                 $val = ilLearningProgressBaseGUI::_getStatusText(
                     (int) $a_set[$c]
@@ -566,7 +653,39 @@ class ilTrObjectUsersPropsTableGUI extends ilLPTableBaseGUI
     {
         foreach ($this->getSelectedColumns() as $c) {
             if ($c != 'status') {
-                $val = $this->parseValue($c, $a_set[$c], $this->type);
+                switch($c)
+                {
+                    case 'udf_11':
+                        if ($this->type == "sahs") {
+                            $val = $this->tlt;  // Zeitgutschrift
+                        } else {
+                            $val = "--";
+                        }
+                        break;
+                    case 'udf_12':
+                        if (($this->type == "sahs") && (intval($a_set["status"]) == ilLPStatus::LP_STATUS_COMPLETED_NUM)) {
+                            $myDate = new DateTime();
+                            //$slc = substr($a_set["status_changed"],0,10);
+                            $slc = $a_set["status_changed"];
+                            (intval(substr($slc,8,2)) == 1) ? $diff = 0 : $diff = 1;
+                            $myDate->setdate(intval(substr($slc,0,4)),intval(substr($slc,5,2)),intval(substr($slc,8,2))-$diff);
+                            $myDate->add( new DateInterval('P1M') );
+                            $val = "05" . substr($myDate->format( 'd.m.Y' ),2,8);  // Datum Zeitgutschrift
+                        } else {
+                            $val = "--";
+                        }
+                        break;
+                    case 'udf_13':
+                        if ($this->type == "sahs") {
+                            $val = ilObject::_lookupTitle($this->obj_id);  //Modultitel
+                        } else {
+                            $val = "--";
+                        }
+                        break;
+                    default:
+                        $val = $this->parseValue($c, $a_set[$c], $this->type);
+                }
+                //$val = $this->parseValue($c, $a_set[$c], $this->type);
             } else {
                 $val = ilLearningProgressBaseGUI::_getStatusText(
                     (int) $a_set[$c]

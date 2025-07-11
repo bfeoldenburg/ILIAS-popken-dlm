@@ -267,7 +267,7 @@ class ilExcel
             $this->workbook->getActiveSheet()->setCellValueExplicit(
                 $a_coords,
                 $this->prepareValue($a_value),
-                DataType::TYPE_NUMERIC
+                DataType::TYPE_STRING
             );
         } else {
             $this->workbook->getActiveSheet()->setCellValueExplicit(
@@ -309,7 +309,7 @@ class ilExcel
             $this->workbook->getActiveSheet()->setCellValueExplicit(
                 $coordinate,
                 $this->prepareValue($a_value),
-                DataType::TYPE_NUMERIC
+                DataType::TYPE_STRING
             );
         } else {
             $this->workbook->getActiveSheet()->setCellValueExplicit(

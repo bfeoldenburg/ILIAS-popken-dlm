@@ -166,7 +166,15 @@ class Renderer extends AbstractComponentRenderer
 
             $tpl->setCurrentBlock($block);
             $tpl->setVariable("BUTTON", $default_renderer->render($button));
-            $tpl->parseCurrentBlock();
+            //$tpl->parseCurrentBlock();
+            if (!\ilUtil::isLimitedRoleMember()) // !\ilUtil::isOneOfThisUser(["anon"]))
+            {
+                $tpl->parseCurrentBlock();
+            } else {
+                if (($button->getLabel() == "Dashboard") || ($button->getLabel() == "Lernerfolge") || ($button->getLabel() == "Achievements")){
+                    $tpl->parseCurrentBlock();
+                }
+            }
 
             if ($slate) {
                 $entry = $entry->withAriaRole(ISlate::MENU);
